@@ -4,16 +4,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Carga parámetros desde un archivo de texto de pares clave=valor.
- * Claves soportadas:
- * - clientes
- * - mensajesPorCliente
- * - filtros
- * - servidores
- * - capacidadEntrada
- * - capacidadEntrega
- */
 public class Config {
     public final int clientesEmisores;
     public final int mensajesPorCliente; // si es <=0, se usa aleatorio 20..100
@@ -71,4 +61,3 @@ public class Config {
                 ", capacidadEntrega=" + capacidadEntrega;
     }
 }
-

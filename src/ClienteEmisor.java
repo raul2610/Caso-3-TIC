@@ -16,19 +16,14 @@ public class ClienteEmisor extends Thread {
     @Override
     public void run() {
         try {
-            // INICIO
             entrada.depositar(Mensaje.inicio(idCliente));
-            // DATA
             for (int i = 1; i <= cantidadMensajes; i++) {
                 boolean spam = rnd.nextBoolean();
                 Mensaje m = Mensaje.data(idCliente, i, spam);
                 entrada.depositar(m);
             }
-            // FIN del cliente
             entrada.depositar(Mensaje.finCliente(idCliente));
         } catch (InterruptedException e) {
-            // terminar silencioso
         }
     }
 }
-

@@ -2,15 +2,13 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class Mensaje {
     public enum Tipo { INICIO, DATA, FIN }
-
     private static final AtomicLong SEQGEN = new AtomicLong(0);
-
-    public final long internoId; // único global para trazas
+    public final long internoId; 
     public final Tipo tipo;
-    public final String clienteId; // puede ser null en FIN del sistema
-    public final int secuencial; // por cliente (DATA), -1 en otros
-    public final boolean spam; // solo relevante para DATA
-    public int cuarentenaContador; // usado por cuarentena
+    public final String clienteId; 
+    public final int secuencial; 
+    public final boolean spam; 
+    public int cuarentenaContador; 
 
     public Mensaje(Tipo tipo, String clienteId, int secuencial, boolean spam) {
         this.internoId = SEQGEN.incrementAndGet();
@@ -42,4 +40,3 @@ public class Mensaje {
         return base;
     }
 }
-

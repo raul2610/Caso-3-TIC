@@ -1,5 +1,5 @@
 clientes=3
-mensajesPorCliente=30
+mensajesPorCliente=10
 filtros=3
 servidores=3
 capacidadEntrada=15

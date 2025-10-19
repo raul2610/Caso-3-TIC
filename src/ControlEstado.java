@@ -1,14 +1,12 @@
-/**
- * Monitor de estado global para coordinación de FIN y terminaciones.
- */
 public class ControlEstado {
     private final int totalClientes;
     private final int totalServidores;
     private int finesClientesRecibidos = 0;
+    private int finesFiltrosRecibidos = 0;
     private boolean finEntregaEmitido = false;
     private boolean finCuarentenaEmitido = false;
+    private boolean sistemaTerminado = false;
 
-    // Referencias para consultas de vacíos
     private BuzonEntrada entrada;
     private BuzonCuarentena cuarentena;
     private BuzonEntrega entrega;
@@ -24,38 +22,73 @@ public class ControlEstado {
 
     public synchronized void registrarFinCliente() {
         finesClientesRecibidos++;
+        System.out.println("FIN de cliente registrado. Total: " + finesClientesRecibidos + "/" + totalClientes);
+    }
+
+    public synchronized void registrarFinFiltro() {
+        finesFiltrosRecibidos++;
+        System.out.println("FIN de filtro registrado. Total: " + finesFiltrosRecibidos + "/" + totalClientes);
     }
 
     public synchronized int getFinesClientesRecibidos() { return finesClientesRecibidos; }
+    public synchronized int getFinesFiltrosRecibidos() { return finesFiltrosRecibidos; }
     public synchronized int getTotalClientes() { return totalClientes; }
     public synchronized int getTotalServidores() { return totalServidores; }
 
     public synchronized boolean finEntregaEmitido() { return finEntregaEmitido; }
     public synchronized boolean finCuarentenaEmitido() { return finCuarentenaEmitido; }
+    public synchronized boolean sistemaTerminado() { return sistemaTerminado; }
 
-    /**
-     * Verifica si se cumplen las condiciones para emitir FIN al buzón de entrega y a la cuarentena.
-     * No realiza los envíos; solo marca y devuelve si el hilo que invoca debe emitirlos.
-     */
-    public synchronized boolean debenEmitirseFines() {
-        if (finEntregaEmitido || finCuarentenaEmitido) return false;
+    public synchronized boolean debeEmitirseFinEntrega() {
+        if (finEntregaEmitido) return false;
+        
         boolean condicion = finesClientesRecibidos >= totalClientes
                 && entrada != null && cuarentena != null
                 && entrada.estaVacio() && cuarentena.estaVacio();
+        
         if (condicion) {
-            // Reservar para que SOLO un filtro los emita
             finEntregaEmitido = true;
-            finCuarentenaEmitido = true;
+            System.out.println("FIN de entrega será emitido por un filtro");
             return true;
         }
         return false;
     }
 
-    // Usado por Entrada para saber si ya no habrá más mensajes
+    public synchronized boolean debeEmitirseFinCuarentena() {
+        if (finCuarentenaEmitido) return false;
+        
+        boolean condicion = finesClientesRecibidos >= totalClientes
+                && entrada != null && cuarentena != null
+                && entrada.estaVacio() && cuarentena.estaVacio();
+        
+        if (condicion) {
+            finCuarentenaEmitido = true;
+            System.out.println("FIN de cuarentena será emitido por un filtro");
+            return true;
+        }
+        return false;
+    }
+
+    public synchronized boolean puedeTerminarFiltro() {
+        return finesFiltrosRecibidos >= totalClientes && 
+               finEntregaEmitido && finCuarentenaEmitido;
+    }
+
     public synchronized boolean produccionTerminadaYVacios() {
         return finesClientesRecibidos >= totalClientes &&
                 entrada != null && entrada.estaVacio() &&
                 cuarentena != null && cuarentena.estaVacio();
     }
-}
 
+    public synchronized void marcarSistemaTerminado() {
+        sistemaTerminado = true;
+        System.out.println("Sistema marcado como terminado");
+    }
+
+    public void despertarFiltros() {
+        if (entrada == null) return;
+        synchronized (entrada) {
+            entrada.notifyAll();
+        }
+    }
+}

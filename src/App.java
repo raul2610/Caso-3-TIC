@@ -11,8 +11,11 @@ public class App {
             config = Config.defaults();
         }
 
-        System.out.println("== Simulador de Centro de Mensajería ==");
-        System.out.println(config);
+        System.out.println("===============================================");
+        System.out.println("    SIMULADOR DE CENTRO DE MENSAJERÍA - CASO 3");
+        System.out.println("===============================================");
+        System.out.println("Configuración: " + config);
+        System.out.println("===============================================");
 
         ControlEstado control = new ControlEstado(config);
 
@@ -45,25 +48,52 @@ public class App {
         }
 
         long start = System.currentTimeMillis();
-        // Lanzar en orden: servidores (activos), filtros, manejador, clientes
+        System.out.println("Iniciando simulación...");
+        
+        System.out.println("Iniciando servidores de entrega...");
         for (Thread t : servidores) t.start();
+        
+        System.out.println("Iniciando filtros de spam...");
         for (Thread t : filtros) t.start();
+        
+        System.out.println("Iniciando manejador de cuarentena...");
         manejadorCuarentena.start();
+        
+        System.out.println("Iniciando clientes emisores...");
         for (Thread t : clientes) t.start();
 
-        // Esperar clientes
+        System.out.println("Esperando terminación de clientes...");
         for (Thread t : clientes) t.join();
-        // Esperar filtros
+        
+        System.out.println("Esperando terminación de filtros...");
         for (Thread t : filtros) t.join();
-        // Esperar manejador
+        
+        System.out.println("Esperando terminación de manejador de cuarentena...");
         manejadorCuarentena.join();
-        // Esperar servidores
+        
+        System.out.println("Esperando terminación de servidores...");
         for (Thread t : servidores) t.join();
 
         long elapsed = System.currentTimeMillis() - start;
-        System.out.println("== Simulación finalizada en " + elapsed + " ms ==");
+
+        System.out.println("===============================================");
+        System.out.println("    RESULTADOS DE LA SIMULACIÓN");
+        System.out.println("===============================================");
+        System.out.println("Tiempo total: " + elapsed + " ms");
         System.out.println("Buzón entrada vacío: " + entrada.estaVacio());
         System.out.println("Buzón cuarentena vacío: " + cuarentena.estaVacio());
-        System.out.println("Buzón entrega vacío (cola interna): " + entrega.estaVacio());
+        System.out.println("Buzón entrega vacío: " + entrega.estaVacio());
+        System.out.println("FIN completamente distribuido: " + entrega.finCompletamenteDistribuido());
+        
+        boolean terminacionLimpia = entrada.estaVacio() && cuarentena.estaVacio() && entrega.estaVacio();
+        System.out.println("Terminación limpia: " + (terminacionLimpia ? "✓ ÉXITO" : "✗ FALLO"));
+        
+        if (terminacionLimpia) {
+            System.out.println("Todos los buzones están vacíos al finalizar");
+            System.out.println("Sistema terminó correctamente");
+        } else {
+            System.out.println("Error: Algunos buzones no están vacíos");
+        }
+        System.out.println("===============================================");
     }
 }

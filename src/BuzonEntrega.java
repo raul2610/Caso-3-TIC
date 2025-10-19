@@ -1,17 +1,15 @@
 import java.util.LinkedList;
 import java.util.Queue;
 
-/**
- * Buzón de entrega (capacidad limitada). Envíos en semiactiva, servidores consumen en activa.
- */
 public class BuzonEntrega {
     private final int capacidad;
     private final int servidores;
     private final Queue<Mensaje> cola = new LinkedList<>();
     private final ControlEstado control;
 
-    private boolean finArmado = false; // ya no habrá nuevos mensajes
-    private int finRestantes = 0; // copias de FIN por repartir
+    private boolean finRecibido = false;        // se ha armado FIN del sistema
+    private int finServidoresRestantes = 0;     // copias de FIN por repartir
+    private boolean cerrado = false;
 
     public BuzonEntrega(int capacidad, int servidores, ControlEstado control) {
         this.capacidad = capacidad;
@@ -19,41 +17,54 @@ public class BuzonEntrega {
         this.control = control;
     }
 
+    // Inserción semiactiva: FIN no ocupa espacio en cola; activa broadcast
     public boolean offerSemiactiva(Mensaje m) {
         while (true) {
             synchronized (this) {
-                if (finArmado) return false; // cerrado para nuevos
+                if (cerrado) return false;
+
+                if (m.tipo == Mensaje.Tipo.FIN) {
+                    finRecibido = true;
+                    finServidoresRestantes = servidores;
+                    System.out.println("FIN recibido en buzón de entrega. Distribuyendo a " + servidores + " servidores");
+                    return true;
+                }
+
                 if (cola.size() < capacidad) {
                     cola.add(m);
-                    if (m.tipo == Mensaje.Tipo.FIN) {
-                        finArmado = true;
-                        finRestantes = servidores; // una copia por servidor
-                    }
                     return true;
                 }
             }
-            Thread.yield(); // semiactiva: cede CPU y reintenta
+            Thread.yield();
         }
     }
 
-    /**
-     * Lectura en espera activa: no bloquea; devuelve null si no hay nada disponible.
-     * Si ya se armó FIN y la cola está vacía, devuelve una copia de FIN (hasta completar servidores).
-     */
+    // Lectura en espera activa
     public Mensaje pollActiva() {
         synchronized (this) {
             Mensaje m = cola.poll();
             if (m != null) return m;
-            if (finArmado && finRestantes > 0) {
-                finRestantes--;
+
+            if (finRecibido && finServidoresRestantes > 0) {
+                finServidoresRestantes--;
+                System.out.println("Distribuyendo FIN a servidor (restantes: " + finServidoresRestantes + ")");
                 return Mensaje.finSistema();
+            }
+            if (finRecibido && finServidoresRestantes == 0) {
+                cerrado = true;
             }
             return null;
         }
     }
 
     public synchronized boolean estaVacio() {
-        return cola.isEmpty();
+        return cola.isEmpty() && finServidoresRestantes == 0;
     }
+
+    public synchronized boolean finCompletamenteDistribuido() {
+        return finRecibido && finServidoresRestantes == 0;
+    }
+
+    public synchronized int getFinServidoresRestantes() { return finServidoresRestantes; }
 }
 
