@@ -12,9 +12,9 @@ public class BuzonEntrega {
     public BuzonEntrega(int capacidad, int servidores) {
         this.capacidad = capacidad;
         this.servidores = servidores;
-            }
+    }
 
-    // Insercion semiactiva: FIN no ocupa espacio en cola
+    // Insercion semiactiva
     public boolean offerSemiactiva(Mensaje m) {
         while (true) {
             synchronized (this) {
@@ -23,7 +23,7 @@ public class BuzonEntrega {
                 if (m.tipo == Mensaje.Tipo.FIN) {
                     finRecibido = true;
                     finServidoresRestantes = servidores;
-                    System.out.println("FIN recibido en buz?n de entrega. Distribuyendo a " + servidores + " servidores");
+                    System.out.println("FIN recibido en buzon de entrega. Distribuyendo a " + servidores + " servidores");
                     return true;
                 }
 

@@ -6,7 +6,7 @@ import java.util.Map;
 
 public class Config {
     public final int clientesEmisores;
-    public final int mensajesPorCliente; // si es <=0, se usa aleatorio 20..100
+    public final int mensajesPorCliente;
     public final int filtrosSpam;
     public final int servidoresEntrega;
     public final int capacidadEntrada;
@@ -47,15 +47,15 @@ public class Config {
         try { return Integer.parseInt(s); } catch (Exception e) { return def; }
     }
 
-    public static Config defaults() { return new Config(3, -1, 2, 3, 20, 10); }
+    public static Config defaults() { return new Config(3, 20, 2, 3, 20, 10); }
 
     public static Config sanitized(Config c) {
-        int clientes = Math.max(0, c.clientesEmisores);
+        int clientes = Math.max(1, c.clientesEmisores);
         int filtros = Math.max(1, c.filtrosSpam);
         int servidores = Math.max(1, c.servidoresEntrega);
         int capIn = Math.max(1, c.capacidadEntrada);
         int capOut = Math.max(1, c.capacidadEntrega);
-        int msgs = c.mensajesPorCliente; // <=0 -> aleatorio
+        int msgs = Math.max(1, c.mensajesPorCliente);
         return new Config(clientes, msgs, filtros, servidores, capIn, capOut);
     }
 

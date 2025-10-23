@@ -1,7 +1,5 @@
 public class ServidorEntrega extends Thread {
     private final BuzonEntrega entrega;
-    @SuppressWarnings("unused")
-    private boolean iniciado = false;
     private int procesados = 0;
 
     public ServidorEntrega(String nombre, BuzonEntrega entrega) {
@@ -11,6 +9,7 @@ public class ServidorEntrega extends Thread {
 
     @Override
     public void run() {
+        System.out.println("[" + getName() + "] Servidor iniciado - esperando mensaje INICIO");
         boolean terminar = false;
         while (!terminar) {
             Mensaje m = entrega.pollActiva();
@@ -20,8 +19,6 @@ public class ServidorEntrega extends Thread {
             }
             switch (m.tipo) {
                 case INICIO:
-                    iniciado = true;
-                    System.out.println("[" + getName() + "] Servidor iniciado - esperando mensaje INICIO");
                     System.out.println("[" + getName() + "] INICIO recibido. Listo para procesar mensajes.");
                     break;
                 case DATA:

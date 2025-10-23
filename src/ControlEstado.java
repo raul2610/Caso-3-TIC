@@ -1,4 +1,4 @@
-﻿public class ControlEstado {
+public class ControlEstado {
     private final int totalClientes;
     private final int totalServidores;
     private int finesClientesRecibidos = 0;
@@ -7,16 +7,15 @@
 
     private BuzonEntrada entrada;
     private BuzonCuarentena cuarentena;
-    @SuppressWarnings("unused")
-    private BuzonEntrega entrega;
 
     public ControlEstado(Config cfg) {
         this.totalClientes = cfg.clientesEmisores;
         this.totalServidores = cfg.servidoresEntrega;
     }
 
-    public void setBuzones(BuzonEntrada e, BuzonCuarentena q, BuzonEntrega d) {
-        this.entrada = e; this.cuarentena = q; this.entrega = d;
+    public void setBuzones(BuzonEntrada e, BuzonCuarentena q) {
+        this.entrada = e;
+        this.cuarentena = q;
     }
 
     public synchronized void registrarFinCliente() {
@@ -38,7 +37,7 @@
                 && entrada.estaVacio() && cuarentena.estaVacio();
         if (condicion) {
             finEntregaEmitido = true;
-            System.out.println("FIN de entrega ser? emitido por un filtro");
+            System.out.println("FIN de entrega sera emitido por un filtro");
             return true;
         }
         return false;
@@ -51,7 +50,7 @@
                 && entrada.estaVacio() && cuarentena.estaVacio();
         if (condicion) {
             finCuarentenaEmitido = true;
-            System.out.println("FIN de cuarentena ser? emitido por un filtro");
+            System.out.println("FIN de cuarentena sera emitido por un filtro");
             return true;
         }
         return false;

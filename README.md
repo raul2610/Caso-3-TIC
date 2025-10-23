@@ -1,12 +1,13 @@
-# Caso 3 – TIC
+# Caso 3 - TIC
 
-Proyecto académico para el simulador de centro de mensajería (ISIS 1311).
+## Compilacion y ejecucion
 
-## Cómo compilar y ejecutar
+1. Ajusta `config.txt` con los parametros deseados (mensajes por cliente definidos ahi).
+2. Compila desde `App.java`
 
-1) Revisar archivo de config.txt
+## Archivo de configuracion
 
-2) Compilar App.java
+Valores por defecto: `clientes=3`, `mensajesPorCliente=20`, `filtros=2`, `servidores=3`, `capacidadEntrada=20`, `capacidadEntrega=10`.
 
 ## Autores (Grupo 1)
 - Antonio Muñoz: 202321083

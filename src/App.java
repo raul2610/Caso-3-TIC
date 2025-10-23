@@ -23,13 +23,13 @@ public class App {
         BuzonEntrada entrada = new BuzonEntrada(config.capacidadEntrada, control);
         BuzonCuarentena cuarentena = new BuzonCuarentena();
         BuzonEntrega entrega = new BuzonEntrega(config.capacidadEntrega, config.servidoresEntrega);
-        control.setBuzones(entrada, cuarentena, entrega);
+        control.setBuzones(entrada, cuarentena);
 
         // Hilos: clientes
         Thread[] clientes = new Thread[config.clientesEmisores];
         for (int i = 0; i < clientes.length; i++) {
             int clienteId = i + 1;
-            int mensajes = config.mensajesPorCliente > 0 ? config.mensajesPorCliente : (20 + (int) (Math.random() * 81));
+            int mensajes = config.mensajesPorCliente;
             clientes[i] = new ClienteEmisor("Cliente-" + clienteId, mensajes, entrada);
         }
 

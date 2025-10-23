@@ -1,82 +1,73 @@
-# Caso 3 – Simulador de Centro de Mensajería (Java)
+# Caso 3 - Simulador de Centro de Mensajeria (Java)
 
-Autor: Equipo – login1, login2
+Autor: Equipo (login1, login2)
 
-## Diseño y clases
+## Diseno y clases
 
-Diagrama (ASCII) de alto nivel:
+Diagrama de alto nivel (ASCII):
 
 ```
-ClientesEmisores --> [BuzonEntrada(cap L, wait/notify)] --consumen--> FiltrosSpam
-     |                                                              |
-     '---- INICIO/FIN/DATA ----------------------------------------'
-
-FiltrosSpam --(DATA ok, semiactiva)--> [BuzonEntrega(cap K)] <--activa-- ServidoresEntrega(N)
-FiltrosSpam --(DATA spam, semiactiva + t∈[10000..20000])--> [BuzonCuarentena(ilim.)]
-ManejadorCuarentena (cada 1s, semiactiva) revisa BuzonCuarentena: descarta (1..21 %7==0),
-decrementa contadores y cuando llegan a 0 envía a BuzonEntrega (semiactiva)
-
-ControlEstado: monitor con contadores (FIN de clientes) + decisión única de FIN del sistema
+Clientes --> [BuzonEntrada cap=L, wait/notify] --> FiltrosSpam
+FiltrosSpam --(DATA ok, semiactiva)--> [BuzonEntrega cap=K] --espera activa--> Servidores
+FiltrosSpam --(DATA spam, semiactiva + t[10000..20000])--> [BuzonCuarentena ilimitado]
+ManejadorCuarentena (cada 1s) revisa cuarentena, descarta (1..21 %7==0) y libera a entrega
+ControlEstado: monitor que decide emision unica de FIN y coordina terminacion
 ```
 
 Clases principales:
 
-- `Mensaje` y `Mensaje.Tipo {INICIO, DATA, FIN}`; cada `DATA` tiene `clienteId`, `secuencial`, `spam`, `cuarentenaContador`.
-- `BuzonEntrada`: capacidad limitada; `depositar/extraer` usan `synchronized` + `wait/notifyAll` (espera pasiva).
-- `BuzonCuarentena`: lista ilimitada; agrega en semiactiva; `procesarUnaVuelta()` devuelve los mensajes que pasan a entrega y si llegó `FIN`.
-- `BuzonEntrega`: capacidad limitada; escribe en semiactiva; lectura en activa con `pollActiva()`. Al recibir `FIN` arma un broadcast entregando una copia de `FIN` a cada servidor.
-- `ClienteEmisor`: produce `INICIO`, N `DATA` (20..100 o fijo por config) y `FIN` (espera pasiva para publicar en entrada).
-- `FiltroSpam`: consume de entrada en pasiva; si `DATA` y `spam` → cuarentena (semiactiva + contador 10000..20000); si válido → entrega (semiactiva). Cuenta FIN de clientes y, cuando `entrada` está vacía y `cuarentena` vacía y no habrá nuevos, emite un único `FIN` a entrega y otro a cuarentena (vía `ControlEstado.debenEmitirseFines()`).
-- `ManejadorCuarentena`: semiactivo, itera cada segundo; por mensaje genera aleatorio [1..21]; si múltiplo de 7, descarta; si el contador llega a 0, envía a entrega. Termina al ver `FIN` en su buzón.
-- `ServidorEntrega`: lectura en espera activa; procesa `DATA` con espera aleatoria corta; al recibir `FIN` termina. Marca inicio al ver un `INICIO`.
-- `ControlEstado`: monitor global con contadores y decisión única de emisión de `FIN` al buzón de entrega y al de cuarentena.
+- `Mensaje`: contiene tipo (`INICIO`, `DATA`, `FIN`), id global secuencial, id de cliente, secuencial por cliente, flag spam y contador de cuarentena (ms).
+- `BuzonEntrada`: cola limitada; productores y filtros usan espera pasiva (`synchronized` + `wait/notifyAll`).
+- `BuzonCuarentena`: lista ilimitada; insercion semiactiva; `procesarUnaVuelta()` recorre mensajes, descuenta 1000 ms por ciclo y acumula los que pasan a entrega.
+- `BuzonEntrega`: cola limitada con insercion semiactiva; lectura en espera activa (`pollActiva`). Al recibir FIN arma un broadcast interno (copia por servidor) sin dejar residuos en la cola.
+- `ClienteEmisor`: genera secuencia fija de mensajes definida en `config.txt` (`INICIO`, N `DATA`, `FIN`).
+- `FiltroSpam`: consume en pasiva; DATA spam va a cuarentena con tiempo aleatorio [10000..20000] ms, DATA valida va a entrega; registra FIN de cliente y decide la emision unica de FIN (entrega/cuarentena) cuando entrada y cuarentena estan vacias.
+- `ManejadorCuarentena`: semiactivo (ciclo cada 1 s); descuenta contadores, descarta maliciosos y libera mensajes listos hacia entrega; termina con FIN.
+- `ServidorEntrega`: espera activa; procesa DATA con retardo aleatorio corto, finaliza al recibir su copia de FIN.
+- `ControlEstado`: monitor que guarda conteo de FIN de clientes y decide cuando emitir el FIN del sistema, ademas de exponer utilidades para despertar filtros.
 
-## Sincronización por pareja
+## Sincronizacion por pareja
 
-- Cliente → Buzón de entrada: espera pasiva; `depositar()` bloquea con `wait` si lleno y hace `notifyAll` al insertar.
-- Filtro → Buzón de entrada: `extraer()` bloquea con `wait` si vacío. Despierta al cierre cuando ya no habrá más producción.
-- Filtro → Buzón de cuarentena: semiactiva (siempre cabe); no usa `wait`.
-- Filtro → Buzón de entrega: semiactiva; si lleno, bucle con `Thread.yield()` hasta insertar.
-- Manejador → Buzón de cuarentena: semiactivo, una pasada por ciclo; usa sección crítica sincronizada para revisar/remover y luego envía a entrega fuera del candado.
-- Servidor → Buzón de entrega: espera activa (`pollActiva()`); si no hay, devuelve `null` y el servidor hace `yield`. Tras armar `FIN`, el buzón reparte N copias (una por servidor) sin necesidad de bloquear servidores.
-- Filtros ↔ ControlEstado: `synchronized` para contadores y condición única de emisión de FIN global.
+- Cliente -> BuzonEntrada: espera pasiva; al depositar notifica (`notifyAll`) a filtros.
+- Filtro -> BuzonEntrada: `extraer()` espera pasiva hasta obtener mensaje o deteccion de cierre.
+- Filtro -> BuzonCuarentena: semiactiva; siempre puede insertar.
+- Filtro -> BuzonEntrega: semiactiva con `Thread.yield()` si esta lleno.
+- Manejador -> BuzonCuarentena: seccion critica sincronizada, recorre lista en cada ciclo.
+- Servidor -> BuzonEntrega: espera activa; recibe copias de FIN desde el broadcast interno.
+- Filtros <-> ControlEstado: metodos sincronizados para actualizar contadores y evaluar condiciones de cierre.
 
-## Reglas de terminación y limpieza
+## Puntos clave del funcionamiento
 
-- Clientes: finalizan tras publicar su `FIN`.
-- Filtros: finalizan cuando `extraer()` retorna `null` (no habrá más mensajes) y/o después de emitir los `FIN` globales.
-- Manejador: finaliza al detectar `FIN` en cuarentena.
-- Servidores: finalizan al recibir su copia de `FIN`.
-- Limpieza: al finalizar, `App` reporta vacíos de los tres buzones. `BuzonEntrega` garantiza que, tras repartir todas las copias de `FIN`, su cola interna queda vacía.
+- **Mensajes por cliente**: son fijos y se obtienen exclusivamente del archivo de configuracion. Si falta la clave o es invalida, se usa el valor por defecto (20).
+- **Emision de FIN del sistema**: exactamente un filtro emite FIN cuando se cumplen las condiciones: todos los FIN de cliente recibidos y tanto entrada como cuarentena estan vacios. Se publican dos mensajes FIN: uno al buzon de entrega (que reparte copias a cada servidor) y otro a la cuarentena para cerrar el manejador.
+- **Cuarentena**: contadores se interpretan como milisegundos (10-20 segundos). En cada ciclo se resta 1000 ms, se descartan los mensajes maliciosos (multiplo de 7) y se liberan los que llegan a 0.
+- **Terminacion limpia**: al finalizar, los tres buzones quedan vacios, todos los servidores reciben FIN y los hilos completan correctamente (`join()` en `App`).
 
-## Validación realizada
+## Validacion realizada
 
-Pruebas manuales (consola):
+Pruebas manuales en PowerShell:
 
-1. Terminación limpia: con `config.txt` por defecto, todos los hilos hacen `join()` y se imprime que los tres buzones quedan vacíos.
-2. Distribución de FIN: se verifica por logs de cada `Servidor-X` que todos reciben `FIN`.
-3. Sin pérdida: conteo visual de `INICIO` y volumen de `DATA` entregados (los spam pueden descartarse o enviarse tras cuarentena). No se reinsertan mensajes y no hay duplicados.
-4. Cuarentena: se observan contadores decreciendo por lotes y descartes (múltiplos de 7) antes de llegar a 0.
+1. Configuracion por defecto (`config.txt`): la simulacion termina en ~18-20 segundos, todos los buzones quedan vacios y el resumen marca terminacion limpia.
+2. Cambio de parametros (capacidades peque??as y mayor numero de clientes): se verifica que los clientes esperan pasivamente cuando el buzon de entrada se llena y que los filtros liberan correctamente tras recibir FIN.
+3. Verificacion de FIN distribuido: los logs del buzon de entrega muestran la distribucion de FIN a cada servidor y la bandera `finCompletamenteDistribuido` se imprime como `true`.
+4. Cuarentena activa: se observan mensajes descartados por el multiplicador de 7 y otros liberados cuando su contador llega a 0.
 
-## Ejecución
-
-Compilar y ejecutar (Windows/PowerShell):
+## Ejecucion
 
 ```
 javac -d bin src/*.java
 java -cp bin App config.txt
 ```
 
-El archivo `config.txt` soporta:
+### Ejemplo de `config.txt`
 
 ```
 clientes=3
-mensajesPorCliente=30
+mensajesPorCliente=10
 filtros=3
 servidores=3
 capacidadEntrada=15
 capacidadEntrega=10
 ```
 
-Si `mensajesPorCliente <= 0`, cada cliente genera [20..100] mensajes aleatorios.
-
+Todos los valores son obligatorios para fijar el comportamiento, pero si se omite alguno se usan los defaults indicados en `Config.defaults()`.
