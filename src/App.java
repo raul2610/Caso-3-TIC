@@ -1,27 +1,28 @@
-import java.io.IOException;
+﻿import java.io.IOException;
 
 public class App {
     public static void main(String[] args) throws Exception {
         String configPath = args != null && args.length > 0 ? args[0] : "config.txt";
-        Config config;
+        Config loaded;
         try {
-            config = Config.load(configPath);
+            loaded = Config.load(configPath);
         } catch (IOException e) {
-            System.out.println("No se pudo leer el archivo de configuración '" + configPath + "'. Usando valores por defecto.");
-            config = Config.defaults();
+            System.out.println("No se pudo leer el archivo de configuracion '" + configPath + "'. Usando valores por defecto.");
+            loaded = Config.defaults();
         }
+        Config config = Config.sanitized(loaded);
 
         System.out.println("===============================================");
-        System.out.println("    SIMULADOR DE CENTRO DE MENSAJERÍA - CASO 3");
+        System.out.println("    SIMULADOR DE CENTRO DE MENSAJERIA - CASO 3");
         System.out.println("===============================================");
-        System.out.println("Configuración: " + config);
+        System.out.println("Configuracion: " + config);
         System.out.println("===============================================");
 
         ControlEstado control = new ControlEstado(config);
 
         BuzonEntrada entrada = new BuzonEntrada(config.capacidadEntrada, control);
-        BuzonCuarentena cuarentena = new BuzonCuarentena(control);
-        BuzonEntrega entrega = new BuzonEntrega(config.capacidadEntrega, config.servidoresEntrega, control);
+        BuzonCuarentena cuarentena = new BuzonCuarentena();
+        BuzonEntrega entrega = new BuzonEntrega(config.capacidadEntrega, config.servidoresEntrega);
         control.setBuzones(entrada, cuarentena, entrega);
 
         // Hilos: clientes
@@ -48,7 +49,7 @@ public class App {
         }
 
         long start = System.currentTimeMillis();
-        System.out.println("Iniciando simulación...");
+        System.out.println("Iniciando simulacion...");
         
         System.out.println("Iniciando servidores de entrega...");
         for (Thread t : servidores) t.start();
@@ -62,37 +63,33 @@ public class App {
         System.out.println("Iniciando clientes emisores...");
         for (Thread t : clientes) t.start();
 
-        System.out.println("Esperando terminación de clientes...");
+        System.out.println("Esperando terminacion de clientes...");
         for (Thread t : clientes) t.join();
         
-        System.out.println("Esperando terminación de filtros...");
+        System.out.println("Esperando terminacion de filtros...");
         for (Thread t : filtros) t.join();
         
-        System.out.println("Esperando terminación de manejador de cuarentena...");
+        System.out.println("Esperando terminacion de manejador de cuarentena...");
         manejadorCuarentena.join();
         
-        System.out.println("Esperando terminación de servidores...");
+        System.out.println("Esperando terminacion de servidores...");
         for (Thread t : servidores) t.join();
 
         long elapsed = System.currentTimeMillis() - start;
 
         System.out.println("===============================================");
-        System.out.println("    RESULTADOS DE LA SIMULACIÓN");
+        System.out.println("    RESULTADOS DE LA SIMULACION");
         System.out.println("===============================================");
         System.out.println("Tiempo total: " + elapsed + " ms");
-        System.out.println("Buzón entrada vacío: " + entrada.estaVacio());
-        System.out.println("Buzón cuarentena vacío: " + cuarentena.estaVacio());
-        System.out.println("Buzón entrega vacío: " + entrega.estaVacio());
+        System.out.println("Buzon entrada vacio: " + entrada.estaVacio());
+        System.out.println("Buzon cuarentena vacio: " + cuarentena.estaVacio());
+        System.out.println("Buzon entrega vacio: " + entrega.estaVacio());
         System.out.println("FIN completamente distribuido: " + entrega.finCompletamenteDistribuido());
         
         boolean terminacionLimpia = entrada.estaVacio() && cuarentena.estaVacio() && entrega.estaVacio();
-        System.out.println("Terminación limpia: " + (terminacionLimpia ? "✓ ÉXITO" : "✗ FALLO"));
-        
-        if (terminacionLimpia) {
-            System.out.println("Todos los buzones están vacíos al finalizar");
-            System.out.println("Sistema terminó correctamente");
-        } else {
-            System.out.println("Error: Algunos buzones no están vacíos");
+        System.out.println("Terminacion limpia: " + (terminacionLimpia ? "EXITO" : "FALLO"));
+        if (!terminacionLimpia) {
+            System.out.println("Error: Algunos buzones no estan vacios");
         }
         System.out.println("===============================================");
     }

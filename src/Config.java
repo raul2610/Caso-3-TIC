@@ -47,8 +47,16 @@ public class Config {
         try { return Integer.parseInt(s); } catch (Exception e) { return def; }
     }
 
-    public static Config defaults() {
-        return new Config(3, -1, 2, 3, 20, 10);
+    public static Config defaults() { return new Config(3, -1, 2, 3, 20, 10); }
+
+    public static Config sanitized(Config c) {
+        int clientes = Math.max(0, c.clientesEmisores);
+        int filtros = Math.max(1, c.filtrosSpam);
+        int servidores = Math.max(1, c.servidoresEntrega);
+        int capIn = Math.max(1, c.capacidadEntrada);
+        int capOut = Math.max(1, c.capacidadEntrega);
+        int msgs = c.mensajesPorCliente; // <=0 -> aleatorio
+        return new Config(clientes, msgs, filtros, servidores, capIn, capOut);
     }
 
     @Override

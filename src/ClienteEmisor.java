@@ -24,6 +24,7 @@ public class ClienteEmisor extends Thread {
             }
             entrada.depositar(Mensaje.finCliente(idCliente));
         } catch (InterruptedException e) {
+            // salida silenciosa
         }
     }
 }

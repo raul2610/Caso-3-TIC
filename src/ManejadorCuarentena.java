@@ -30,7 +30,7 @@ public class ManejadorCuarentena extends Thread {
             }
 
             if (proc.fin) {
-                System.out.println(getName() + " recibiA3 FIN - terminando");
+                System.out.println(getName() + " recibio FIN - terminando");
                 fin = true;
             }
             if (control.produccionTerminadaYVacios()) {
@@ -45,7 +45,6 @@ public class ManejadorCuarentena extends Thread {
             }
         }
 
-        System.out.println(getName() + " finalizado despuAcs de " + ciclos + " ciclos");
+        System.out.println(getName() + " finalizado despues de " + ciclos + " ciclos");
     }
 }
-

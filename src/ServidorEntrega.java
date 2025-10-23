@@ -1,7 +1,8 @@
 public class ServidorEntrega extends Thread {
     private final BuzonEntrega entrega;
+    @SuppressWarnings("unused")
     private boolean iniciado = false;
-    private int mensajesProcesados = 0;
+    private int procesados = 0;
 
     public ServidorEntrega(String nombre, BuzonEntrega entrega) {
         super(nombre);
@@ -10,56 +11,34 @@ public class ServidorEntrega extends Thread {
 
     @Override
     public void run() {
-        log("Servidor iniciado - esperando mensaje INICIO");
         boolean terminar = false;
-        int intentosActivos = 0;
-        
         while (!terminar) {
-            Mensaje m = entrega.pollActiva(); // espera activa
-            intentosActivos++;
-            
+            Mensaje m = entrega.pollActiva();
             if (m == null) {
-                // Espera activa
                 Thread.yield();
                 continue;
             }
-            intentosActivos = 0;
-            
             switch (m.tipo) {
                 case INICIO:
                     iniciado = true;
-                    log("INICIO recibido. Listo para procesar mensajes.");
+                    System.out.println("[" + getName() + "] Servidor iniciado - esperando mensaje INICIO");
+                    System.out.println("[" + getName() + "] INICIO recibido. Listo para procesar mensajes.");
                     break;
                 case DATA:
-                    if (iniciado) {
-                        mensajesProcesados++;
-                        log("Procesando mensaje DATA #" + mensajesProcesados + ": " + m);
-                        simularProcesamiento();
-                    } else {
-                        log("Mensaje DATA recibido antes de INICIO - procesando de todas formas: " + m);
-                        mensajesProcesados++;
-                        simularProcesamiento();
-                    }
+                    procesados++;
+                    simularProcesamiento();
                     break;
                 case FIN:
                     terminar = true;
-                    log("FIN recibido. Terminando después de procesar " + mensajesProcesados + " mensajes.");
+                    System.out.println("[" + getName() + "] FIN recibido. Terminando despues de procesar " + procesados + " mensajes.");
                     break;
             }
         }
-        log("Servidor finalizado");
+        System.out.println("[" + getName() + "] Servidor finalizado");
     }
 
     private void simularProcesamiento() {
-        int t = 10 + (int)(Math.random() * 50); // 10-60ms
-        try { 
-            Thread.sleep(t); 
-        } catch (InterruptedException e) {
-            log("Interrumpido durante procesamiento");
-        }
-    }
-
-    private void log(String s) {
-        System.out.println("[" + getName() + "] " + s);
+        int t = 5 + (int)(Math.random() * 25);
+        try { Thread.sleep(t); } catch (InterruptedException ignored) {}
     }
 }

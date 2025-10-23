@@ -12,14 +12,12 @@ public class BuzonEntrada {
         this.control = control;
     }
 
-    public synchronized void setControlReferences() {}
-
     public synchronized void depositar(Mensaje m) throws InterruptedException {
         while (cola.size() >= capacidad) {
-            wait(); // espera pasiva
+            wait();
         }
         cola.add(m);
-        notifyAll(); // despierta filtros
+        notifyAll();
     }
 
     public synchronized Mensaje extraer() throws InterruptedException {
@@ -32,7 +30,7 @@ public class BuzonEntrada {
         }
         if (cola.isEmpty()) return null;
         Mensaje m = cola.remove();
-        notifyAll(); // despertar posibles productores
+        notifyAll();
         return m;
     }
 

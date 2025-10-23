@@ -5,19 +5,16 @@ public class BuzonEntrega {
     private final int capacidad;
     private final int servidores;
     private final Queue<Mensaje> cola = new LinkedList<>();
-    private final ControlEstado control;
-
-    private boolean finRecibido = false;        // se ha armado FIN del sistema
-    private int finServidoresRestantes = 0;     // copias de FIN por repartir
+    private boolean finRecibido = false;
+    private int finServidoresRestantes = 0;
     private boolean cerrado = false;
 
-    public BuzonEntrega(int capacidad, int servidores, ControlEstado control) {
+    public BuzonEntrega(int capacidad, int servidores) {
         this.capacidad = capacidad;
         this.servidores = servidores;
-        this.control = control;
-    }
+            }
 
-    // Inserción semiactiva: FIN no ocupa espacio en cola; activa broadcast
+    // Insercion semiactiva: FIN no ocupa espacio en cola
     public boolean offerSemiactiva(Mensaje m) {
         while (true) {
             synchronized (this) {
@@ -26,7 +23,7 @@ public class BuzonEntrega {
                 if (m.tipo == Mensaje.Tipo.FIN) {
                     finRecibido = true;
                     finServidoresRestantes = servidores;
-                    System.out.println("FIN recibido en buzón de entrega. Distribuyendo a " + servidores + " servidores");
+                    System.out.println("FIN recibido en buz?n de entrega. Distribuyendo a " + servidores + " servidores");
                     return true;
                 }
 
@@ -65,6 +62,7 @@ public class BuzonEntrega {
         return finRecibido && finServidoresRestantes == 0;
     }
 
-    public synchronized int getFinServidoresRestantes() { return finServidoresRestantes; }
+    public synchronized int getFinServidoresRestantes() {
+        return finServidoresRestantes; 
+    }
 }
-

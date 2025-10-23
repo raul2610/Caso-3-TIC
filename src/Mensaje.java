@@ -1,17 +1,18 @@
-import java.util.concurrent.atomic.AtomicLong;
-
 public class Mensaje {
     public enum Tipo { INICIO, DATA, FIN }
-    private static final AtomicLong SEQGEN = new AtomicLong(0);
-    public final long internoId; 
+
+    private static long SEQGEN = 0L;
+    private static synchronized long nextSeq() { return ++SEQGEN; }
+
+    public final long internoId;
     public final Tipo tipo;
-    public final String clienteId; 
-    public final int secuencial; 
-    public final boolean spam; 
-    public int cuarentenaContador; 
+    public final String clienteId;
+    public final int secuencial;
+    public final boolean spam;
+    public int cuarentenaContador;
 
     public Mensaje(Tipo tipo, String clienteId, int secuencial, boolean spam) {
-        this.internoId = SEQGEN.incrementAndGet();
+        this.internoId = nextSeq();
         this.tipo = tipo;
         this.clienteId = clienteId;
         this.secuencial = secuencial;
@@ -19,18 +20,10 @@ public class Mensaje {
         this.cuarentenaContador = 0;
     }
 
-    public static Mensaje inicio(String clienteId) {
-        return new Mensaje(Tipo.INICIO, clienteId, -1, false);
-    }
-    public static Mensaje finCliente(String clienteId) {
-        return new Mensaje(Tipo.FIN, clienteId, -1, false);
-    }
-    public static Mensaje finSistema() {
-        return new Mensaje(Tipo.FIN, null, -1, false);
-    }
-    public static Mensaje data(String clienteId, int secuencial, boolean spam) {
-        return new Mensaje(Tipo.DATA, clienteId, secuencial, spam);
-    }
+    public static Mensaje inicio(String clienteId) { return new Mensaje(Tipo.INICIO, clienteId, -1, false); }
+    public static Mensaje finCliente(String clienteId) { return new Mensaje(Tipo.FIN, clienteId, -1, false); }
+    public static Mensaje finSistema() { return new Mensaje(Tipo.FIN, null, -1, false); }
+    public static Mensaje data(String clienteId, int secuencial, boolean spam) { return new Mensaje(Tipo.DATA, clienteId, secuencial, spam); }
 
     @Override
     public String toString() {

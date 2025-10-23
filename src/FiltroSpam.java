@@ -3,7 +3,6 @@ public class FiltroSpam extends Thread {
     private final BuzonCuarentena cuarentena;
     private final BuzonEntrega entrega;
     private final ControlEstado control;
-    private int finesRecibidos = 0;
 
     public FiltroSpam(String nombre, BuzonEntrada entrada, BuzonCuarentena cuarentena,
                       BuzonEntrega entrega, ControlEstado control) {
@@ -18,7 +17,7 @@ public class FiltroSpam extends Thread {
     public void run() {
         try {
             System.out.println(getName() + " iniciado");
-            
+
             while (true) {
                 if (control.puedeTerminarFiltro()) {
                     System.out.println(getName() + " terminando - condiciones cumplidas");
@@ -39,26 +38,17 @@ public class FiltroSpam extends Thread {
                         }
                         break;
                     case FIN:
-                        finesRecibidos++;
                         control.registrarFinCliente();
-                        System.out.println(getName() + " recibió FIN de cliente " + m.clienteId + 
-                                         " (total recibidos: " + finesRecibidos + ")");
-                        
                         intentarEmitirFines();
-                        
-                        if (control.puedeTerminarFiltro()) {
-                            System.out.println(getName() + " terminando después de procesar FIN");
-                            return;
-                        }
                         break;
                     case DATA:
                         if (m.spam) {
                             m.cuarentenaContador = 10000 + (int) (Math.random() * 10001);
-                            System.out.println(getName() + " enviando SPAM a cuarentena: " + m + 
+                            System.out.println(getName() + " enviando SPAM a cuarentena: " + m +
                                              " (tiempo: " + m.cuarentenaContador + ")");
                             cuarentena.offerSemiactiva(m);
                         } else {
-                            System.out.println(getName() + " enviando mensaje válido a entrega: " + m);
+                            System.out.println(getName() + " enviando mensaje valido a entrega: " + m);
                             while (!entrega.offerSemiactiva(m)) {
                                 Thread.yield();
                             }
@@ -69,23 +59,23 @@ public class FiltroSpam extends Thread {
         } catch (InterruptedException e) {
             System.out.println(getName() + " interrumpido");
         }
-        
+
         System.out.println(getName() + " finalizado");
     }
 
     private void intentarEmitirFines() {
         if (control.debeEmitirseFinEntrega()) {
-            System.out.println(getName() + " emitiendo FIN a buzón de entrega");
+            System.out.println(getName() + " emitiendo FIN a buzon de entrega");
             while (!entrega.offerSemiactiva(Mensaje.finSistema())) {
                 Thread.yield();
             }
         }
 
         if (control.debeEmitirseFinCuarentena()) {
-            System.out.println(getName() + " emitiendo FIN a buzón de cuarentena");
+            System.out.println(getName() + " emitiendo FIN a buzon de cuarentena");
             cuarentena.offerSemiactiva(Mensaje.finSistema());
         }
-        
+
         synchronized (entrada) {
             entrada.notifyAll();
         }
