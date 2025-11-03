@@ -12,10 +12,9 @@ public class ServidorEntrega extends Thread {
         System.out.println("[" + getName() + "] Servidor iniciado - esperando mensaje INICIO");
         boolean terminar = false;
         while (!terminar) {
-            Mensaje m = entrega.pollActiva();
-            if (m == null) {
-                Thread.yield();
-                continue;
+            Mensaje m;
+            // Espera activa: giramos hasta que haya un mensaje disponible.
+            while ((m = entrega.pollActiva()) == null) {
             }
             switch (m.tipo) {
                 case INICIO:

@@ -23,12 +23,25 @@ public class ControlEstado {
         System.out.println("FIN de cliente registrado. Total: " + finesClientesRecibidos + "/" + totalClientes);
     }
 
-    public synchronized int getFinesClientesRecibidos() { return finesClientesRecibidos; }
-    public synchronized int getTotalClientes() { return totalClientes; }
-    public synchronized int getTotalServidores() { return totalServidores; }
+    public synchronized int getFinesClientesRecibidos() {
+         return finesClientesRecibidos; 
+    }
 
-    public synchronized boolean finEntregaEmitido() { return finEntregaEmitido; }
-    public synchronized boolean finCuarentenaEmitido() { return finCuarentenaEmitido; }
+    public synchronized int getTotalClientes() {
+        return totalClientes; 
+    }
+
+    public synchronized int getTotalServidores() {
+        return totalServidores; 
+    }
+
+    public synchronized boolean finEntregaEmitido() { 
+        return finEntregaEmitido; 
+    }
+
+    public synchronized boolean finCuarentenaEmitido() { 
+        return finCuarentenaEmitido; 
+    }
 
     public synchronized boolean debeEmitirseFinEntrega() {
         if (finEntregaEmitido) return false;

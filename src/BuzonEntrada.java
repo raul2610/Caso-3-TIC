@@ -34,7 +34,11 @@ public class BuzonEntrada {
         return m;
     }
 
-    public synchronized boolean estaVacio() { return cola.isEmpty(); }
+    public synchronized boolean estaVacio() { 
+        return cola.isEmpty(); 
+    }
 
-    public synchronized int size() { return cola.size(); }
+    public synchronized int size() { 
+        return cola.size(); 
+    }
 }

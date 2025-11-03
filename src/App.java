@@ -84,10 +84,10 @@ public class App {
         System.out.println("Buzon entrada vacio: " + entrada.estaVacio());
         System.out.println("Buzon cuarentena vacio: " + cuarentena.estaVacio());
         System.out.println("Buzon entrega vacio: " + entrega.estaVacio());
-        System.out.println("FIN completamente distribuido: " + entrega.finCompletamenteDistribuido());
+        System.out.println("Fin completamente distribuido: " + entrega.finCompletamenteDistribuido());
         
         boolean terminacionLimpia = entrada.estaVacio() && cuarentena.estaVacio() && entrega.estaVacio();
-        System.out.println("Terminacion limpia: " + (terminacionLimpia ? "EXITO" : "FALLO"));
+        System.out.println("Terminacion limpia: " + (terminacionLimpia ? "Éxito" : "Fallo"));
         if (!terminacionLimpia) {
             System.out.println("Error: Algunos buzones no estan vacios");
         }

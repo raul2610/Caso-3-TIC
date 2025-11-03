@@ -1,4 +1,4 @@
-clientes=3
+clientes=10
 mensajesPorCliente=10
 filtros=3
 servidores=3
