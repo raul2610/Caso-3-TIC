@@ -7,7 +7,7 @@
 
 ## Archivo de configuracion
 
-Valores por defecto: `clientes=10`, `mensajesPorCliente=10`, `filtros=3`, `servidores=3`, `capacidadEntrada=`, `capacidadEntrega=10`.
+Valores por defecto: `clientes=10`, `mensajesPorCliente=10`, `filtros=3`, `servidores=3`, `capacidadEntrada=15`, `capacidadEntrega=10`.
 
 ## Autores (Grupo 1)
 - Antonio Muñoz: 202321083
